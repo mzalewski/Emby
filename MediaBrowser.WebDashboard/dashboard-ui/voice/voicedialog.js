@@ -1,36 +1,8 @@
-define(['dialogHelper', 'jQuery', 'paper-button'], function (dialogHelper, $) {
+define(['dialogHelper', 'jQuery', 'voice/voicereceiver', 'paper-button'], function (dialogHelper, $, voicereceiver) {
 
     var currentRecognition;
     var lang = 'en-US';
-
-    var commandgroups;
-
-    function getCommandGroups() {
-    
-        if (commandgroups) {
-            return Promise.resolve(commandgroups);
-        }
-
-        return new Promise(function (resolve, reject) {
-
-            var file = "grammar";
-            //if (language && language.length > 0)
-            //    file = language;
-
-            var xhr = new XMLHttpRequest();
-            xhr.open('GET', "voice/grammar/" + file + ".json", true);
-
-            xhr.onload = function (e) {
-
-                commandgroups = JSON.parse(this.response);
-                resolve(commandgroups);
-            }
-
-            xhr.onerror = reject;
-
-            xhr.send();
-        });
-    }
+    var commandGroups = null;
 
     /// <summary> Shuffle array. </summary>
     /// <param name="array"> The array. </param>
@@ -58,7 +30,7 @@ define(['dialogHelper', 'jQuery', 'paper-button'], function (dialogHelper, $) {
     /// <returns> The sample commands. </returns>
     function getSampleCommands(groupid) {
 
-        return getCommandGroups().then(function (commandGroups) {
+        return voicereceiver.getCommandGroups().then(function (commandGroups) {
             groupid = typeof (groupid) !== 'undefined' ? groupid : '';
 
             var commands = [];
@@ -86,6 +58,7 @@ define(['dialogHelper', 'jQuery', 'paper-button'], function (dialogHelper, $) {
     /// <param name="groupid"> The groupid. </param>
     /// <returns> The command group. </returns>
     function getCommandGroup(groupid) {
+        commandgroups = commandgroups || voicereceiver.getCommandGroups();
         if (commandgroups) {
             var idx = -1;
             idx = commandgroups.map(function (e) { return e.groupid; }).indexOf(groupid);
@@ -184,14 +157,14 @@ define(['dialogHelper', 'jQuery', 'paper-button'], function (dialogHelper, $) {
         });
 
         $('.btnCancelVoiceInput', dlg).on('click', function () {
-            destroyCurrentRecognition();
+            voicereceiver.cancel();
             dialogHelper.close(dlg);
         });
 
         $('.btnRetry', dlg).on('click', function () {
             $('.unrecognizedCommand').hide();
             $('.defaultVoiceHelp').show();
-            startListening(false);
+            listen();
         });
 
         getCommandsPromise.then(function (commands) {
@@ -214,114 +187,18 @@ define(['dialogHelper', 'jQuery', 'paper-button'], function (dialogHelper, $) {
         $('.defaultVoiceHelp').hide();
     }
 
-    /// <summary> Process the transcript described by text. </summary>
-    /// <param name="text"> The text. </param>
-    /// <returns> . </returns>
-    function processTranscript(text, isCancelled) {
-
-        $('.voiceInputText').html(text);
-
-        if (text || AppInfo.isNativeApp) {
-            $('.blockedMessage').hide();
-        }
-        else {
-            $('.blockedMessage').show();
-        }
-
-        if (text) {
-            require(['voice/voicecommands.js', 'voice/grammarprocessor.js'], function (voicecommands, grammarprocessor) {
-
-                var processor = grammarprocessor(commandgroups, text);
-                if (processor && processor.command) {
-                    voicecommands(processor)
-                        .then(function (result) {
-                            if (result.item.actionid === 'show' && result.item.sourceid === 'group') {
-                                var dlg = currentDialog;
-                                if (dlg)
-                                    showCommands(false, result)
-                                else
-                                    showCommands(true, result)
-                            }
-                        })
-                        .catch(showUnrecognizedCommandHelp);
-                }
-                else
-                    showUnrecognizedCommandHelp();
-
-                var dlg = currentDialog;
-                if (dlg) {
-                    dialogHelper.close(dlg);
-                }
-            });
-
-        }
-        else if (!isCancelled) {
-            showUnrecognizedCommandHelp();
-        }
-    }
-
-    /// <summary> Starts listening internal. </summary>
-    /// <returns> . </returns>
-    function startListening(createUI) {
-
-        destroyCurrentRecognition();
-        var recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition || window.mozSpeechRecognition || window.oSpeechRecognition || window.msSpeechRecognition)();
-        recognition.lang = lang;
-        var groupid = '';
-        //recognition.continuous = true;
-        //recognition.interimResults = true;
-
-        recognition.onresult = function (event) {
-            if (event.results.length > 0) {
-                processTranscript(event.results[0][0].transcript || '');
-            }
-        };
-
-        recognition.onerror = function () {
-            processTranscript('', recognition.cancelled);
-        };
-
-        recognition.onnomatch = function () {
-            processTranscript('', recognition.cancelled);
-        };
-
-        recognition.start();
-        currentRecognition = recognition;
-        showCommands(createUI);
-    }
-
-    /// <summary> Destroys the current recognition. </summary>
-    /// <returns> . </returns>
-    function destroyCurrentRecognition() {
-
-        var recognition = currentRecognition;
-        if (recognition) {
-            recognition.abort();
-            currentRecognition = null;
-        }
-    }
-
-    /// <summary> Cancel listener. </summary>
-    /// <returns> . </returns>
-    function cancelListener() {
-
-        destroyCurrentRecognition();
-        hideVoiceHelp();
-    }
-
     /// <summary> Shows the commands. </summary>
     /// <param name="createUI"> The create user interface. </param>
     /// <returns> . </returns>
-    function showCommands(createUI, result) {
-        if (createUI !== false) {
-            //speak('Hello, what can I do for you?');
-            require(['paper-fab', 'css!voice/voice.css'], function () {
-                if (result)
-                    showVoiceHelp(result.groupid, result.name);
-                else
-                    showVoiceHelp();
-            });
-        }
+    function showCommands( result) {
+        //speak('Hello, what can I do for you?');
+        require(['paper-fab', 'css!voice/voice.css'], function () {
+            if (result)
+                showVoiceHelp(result.groupid, result.name);
+            else
+                showVoiceHelp();
+        });
+        
     }
 
     /// <summary> Speaks the given text. </summary>
@@ -349,9 +226,34 @@ define(['dialogHelper', 'jQuery', 'paper-button'], function (dialogHelper, $) {
         speechSynthesis.speak(utterance);
     }
 
+    function showDialog() {
+        $('.unrecognizedCommand').hide();
+        $('.defaultVoiceHelp').show();
+
+        showCommands();
+        listen();
+    }
+    function listen() {
+        voicereceiver.listenForCommand(lang).then(function (data) {
+            cancelDialog();
+        }, function (result) {
+            if (result.error == 'group') {
+                showVoiceHelp(result.item.groupid, result.name);
+                return;
+            }
+            if (result.text !== undefined)
+                $('.voiceInputText').html(result.text);
+            showUnrecognizedCommandHelp();
+        });
+    }
+    function cancelDialog() {
+        hideVoiceHelp();
+
+    }
+
     /// <summary> An enum constant representing the window. voice input manager option. </summary>
     return {
-        startListening: startListening
+        showDialog: showDialog
     };
 
 });

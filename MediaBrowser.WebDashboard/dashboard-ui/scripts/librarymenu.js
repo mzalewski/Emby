@@ -169,7 +169,7 @@
 
     function showVoice() {
         require(['voice/voice'], function (voice) {
-            voice.startListening();
+            voice.showDialog();
         });
     }
 
