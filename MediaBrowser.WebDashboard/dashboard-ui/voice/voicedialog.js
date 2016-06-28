@@ -1,9 +1,7 @@
-define(['dialogHelper', 'jQuery', 'voice/voicereceiver', 'voice/voiceprocessor','paper-button'], function (dialogHelper, $, voicereceiver, voiceprocessor) {
+define(['dialogHelper', 'voice/voicereceiver', 'voice/voiceprocessor','paper-button'], function (dialogHelper, voicereceiver, voiceprocessor) {
 
-    var currentRecognition;
     var lang = 'en-US';
-    var commandgroups = null;
-
+    
     /// <summary> Shuffle array. </summary>
     /// <param name="array"> The array. </param>
     /// <returns> array </returns>
@@ -88,7 +86,7 @@ define(['dialogHelper', 'jQuery', 'voice/voicereceiver', 'voice/voiceprocessor',
 
         }).join('');
 
-        $('.exampleCommands', elem).html(commands);
+        elem.querySelector('.exampleCommands').innerHTML = commands;
     }
 
     var currentDialog;
@@ -99,87 +97,91 @@ define(['dialogHelper', 'jQuery', 'voice/voicereceiver', 'voice/voiceprocessor',
         var isNewDialog = false;
         if (!currentDialog) {
             isNewDialog = true;
-        var dlg = dialogHelper.createDialog({
-            size: 'medium',
-            removeOnClose: true
-        });
+            var dlg = dialogHelper.createDialog({
+                size: 'medium',
+                removeOnClose: true
+            });
 
-        dlg.classList.add('ui-body-b');
-        dlg.classList.add('background-theme-b');
+            dlg.classList.add('ui-body-b');
+            dlg.classList.add('background-theme-b');
 
-        var html = '';
-        html += '<h2 class="dialogHeader">';
-        html +=
-            '<paper-fab icon="arrow-back" mini class="btnCancelVoiceInput"></paper-fab><span id="voiceDialogGroupName"></span>';
+            var html = '';
+            html += '<h2 class="dialogHeader">';
+            html +=
+                '<paper-fab icon="arrow-back" mini class="btnCancelVoiceInput"></paper-fab><span id="voiceDialogGroupName"></span>';
 
-        html += '</h2>';
+            html += '</h2>';
 
-        html += '<div>';
+            html += '<div>';
 
 
-        html += '<div class="voiceHelpContent">';
+            html += '<div class="voiceHelpContent">';
 
-        html += '<div class="defaultVoiceHelp">';
+            html += '<div class="defaultVoiceHelp">';
 
-        html += '<h1 style="margin-bottom:1.25em;">' + Globalize.translate('HeaderSaySomethingLike') + '</h1>';
+            html += '<h1 style="margin-bottom:1.25em;">' + Globalize.translate('HeaderSaySomethingLike') + '</h1>';
 
-        html += '<div class="exampleCommands">';
-        html += '</div>';
+            html += '<div class="exampleCommands">';
+            html += '</div>';
 
-        // defaultVoiceHelp
-        html += '</div>';
+            // defaultVoiceHelp
+            html += '</div>';
 
-        html += '<div class="unrecognizedCommand" style="display:none;">';
-        html += '<h1>' + Globalize.translate('HeaderYouSaid') + '</h1>';
-        html +=
-            '<p class="exampleCommand voiceInputContainer"><i class="fa fa-quote-left"></i><span class="voiceInputText exampleCommandText"></span><i class="fa fa-quote-right"></i></p>';
-        html += '<p>' + Globalize.translate('MessageWeDidntRecognizeCommand') + '</p>';
+            html += '<div class="unrecognizedCommand" style="display:none;">';
+            html += '<h1>' + Globalize.translate('HeaderYouSaid') + '</h1>';
+            html +=
+                '<p class="exampleCommand voiceInputContainer"><i class="fa fa-quote-left"></i><span class="voiceInputText exampleCommandText"></span><i class="fa fa-quote-right"></i></p>';
+            html += '<p>' + Globalize.translate('MessageWeDidntRecognizeCommand') + '</p>';
 
-        html += '<br/>';
-        html += '<paper-button raised class="submit block btnRetry"><iron-icon icon="mic"></iron-icon><span>' +
-            Globalize.translate('ButtonTryAgain') +
-            '</span></paper-button>';
-        html += '<p class="blockedMessage" style="display:none;">' +
-            Globalize.translate('MessageIfYouBlockedVoice') +
-            '<br/><br/></p>';
+            html += '<br/>';
+            html += '<paper-button raised class="submit block btnRetry"><iron-icon icon="mic"></iron-icon><span>' +
+                Globalize.translate('ButtonTryAgain') +
+                '</span></paper-button>';
+            html += '<p class="blockedMessage" style="display:none;">' +
+                Globalize.translate('MessageIfYouBlockedVoice') +
+                '<br/><br/></p>';
 
-        html += '</div>';
+            html += '</div>';
 
-        html +=
-            '<paper-button raised class="block btnCancelVoiceInput" style="background-color:#444;"><iron-icon icon="close"></iron-icon><span>' + Globalize.translate('ButtonCancel') + '</span></paper-button>';
+            html +=
+                '<paper-button raised class="block btnCancelVoiceInput" style="background-color:#444;"><iron-icon icon="close"></iron-icon><span>' + Globalize.translate('ButtonCancel') + '</span></paper-button>';
 
-        // voiceHelpContent
-        html += '</div>';
+            // voiceHelpContent
+            html += '</div>';
 
-        html += '</div>';
+            html += '</div>';
 
-        dlg.innerHTML = html;
-        document.body.appendChild(dlg);
-    
-        dialogHelper.open(dlg);
-        currentDialog = dlg;
+            dlg.innerHTML = html;
+            document.body.appendChild(dlg);
 
-        dlg.addEventListener('close', function () {
-            currentDialog = null;
-        });
+            dialogHelper.open(dlg);
+            currentDialog = dlg;
 
-        $('.btnCancelVoiceInput', dlg).on('click', function () {
-            voicereceiver.cancel();
-            dialogHelper.close(dlg);
-        });
+            dlg.addEventListener('close',
+                function() {
+                    currentDialog = null;
+                });
 
-        $('.btnRetry', dlg).on('click', function () {
-            $('.unrecognizedCommand').hide();
-            $('.defaultVoiceHelp').show();
-            listen();
-        });
+            var closeButtons = dlg.querySelectorAll('.btnCancelVoiceInput');
+            for (var i in closeButtons) {
+                closeButtons[i].onclick = function() {
+                    voicereceiver.cancel();
+                    dialogHelper.close(dlg);
+                };
+            }
+
+            dlg.querySelector('.btnRetry').onclick =  function () {
+                dlg.querySelector('.unrecognizedCommand').style.display = "none";
+                dlg.querySelector('.defaultVoiceHelp').style.display = "";
+                listen();
+            };
         }
 
         if (groupid) {
             getCommandGroup(groupid)
                 .then(
                     function(grp) {
-                        $('#voiceDialogGroupName').text('  ' + grp.name);
+                        dlg.querySelector('#voiceDialogGroupName').innerText = '  ' + grp.name;
                     });
 
 
@@ -201,19 +203,14 @@ define(['dialogHelper', 'jQuery', 'voice/voicereceiver', 'voice/voiceprocessor',
         return voiceprocessor.processTranscript(input);
     }
 
-    /// <summary> Hides the voice help. </summary>
-    /// <returns> . </returns>
-    function hideVoiceHelp() {
-
-        $('.voiceInputHelp').remove();
-    }
-
     /// <summary> Shows the unrecognized command help. </summary>
     /// <returns> . </returns>
-    function showUnrecognizedCommandHelp() {
+    function showUnrecognizedCommandHelp(command) {
         //speak("I don't understend this command");
-        $('.unrecognizedCommand').show();
-        $('.defaultVoiceHelp').hide();
+        if (command)
+            currentDialog.querySelector('.voiceInputText').innerText = command;
+        currentDialog.querySelector('.unrecognizedCommand').style.display = '';
+        currentDialog.querySelector('.defaultVoiceHelp').style.display = 'none';
     }
 
     /// <summary> Shows the commands. </summary>
@@ -254,31 +251,31 @@ define(['dialogHelper', 'jQuery', 'voice/voicereceiver', 'voice/voiceprocessor',
         console.log('Synthesizing the text: ' + text);
         speechSynthesis.speak(utterance);
     }
-
+    function resetDialog() {
+        if (currentDialog) {
+            currentDialog.querySelector('.unrecognizedCommand').style.display = "none";
+            currentDialog.querySelector('.defaultVoiceHelp').style.display = "";
+        }
+    }
     function showDialog() {
-        $('.unrecognizedCommand').hide();
-        $('.defaultVoiceHelp').show();
-
+        resetDialog();
         showCommands();
         listen();
     }
     function listen() {
         voicereceiver.listenForCommand(lang || "en-US").then(processInput).then(function (data) {
-            cancelDialog();
+            closeDialog();
         }, function (result) {
-            console.log("Result received by voice dialog", result);
             if (result.error == 'group') {
                 showVoiceHelp(result.item.groupid, result.groupName);
                 return;
             }
-            if (result.text !== undefined)
-                $('.voiceInputText').html(result.text);
-            showUnrecognizedCommandHelp();
+            showUnrecognizedCommandHelp(result.text || '');
         });
     }
-    function cancelDialog() {
-        hideVoiceHelp();
-
+    function closeDialog() {
+        dialogHelper.close(currentDialog);
+        voicereceiver.cancel();
     }
 
     /// <summary> An enum constant representing the window. voice input manager option. </summary>

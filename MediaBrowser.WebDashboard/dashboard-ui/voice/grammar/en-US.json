@@ -232,16 +232,16 @@
         "altcommand": "(?<action>play|Listen to)\\s?(?<source> next up)",
         "commandtemplates": [ "Play next up" ]
       },
-      {
-        "actionid": "play",
-        "sourceid": "latestepisodes",
-        "command": "(?<action>play)\\s?(?<determiner1>my|me)?\\s?(?<source>latest episodes)\\s?(?<deviceaction>on device|to device)\\s?(?<Devicename>.*)",
-        "altcommand": "(?<action>play)\\s?(?<determiner1>my|me)?\\s?(?<source>latest episodes)",
-        "filters": [ "unplayed" ],
-        "sortBy": "datecreated",
-        "sortOrder": "Descending",
-        "commandtemplates": [ "Play my latest episodes" ]
-      }
+        {
+            "actionid": "play",
+            "sourceid": "latestepisodes",
+            "command": "(?<action>play)\\s?(?<determiner1>my|me)?\\s?(?<source>latest episodes)\\s?(?<deviceaction>on device|to device)\\s?(?<Devicename>.*)",
+            "altcommand": "(?<action>play)\\s?(?<determiner1>my|me)?\\s?(?<source>latest episodes)",
+            "filters": [ "unplayed" ],
+            "sortBy": "datecreated",
+            "sortOrder": "Descending",
+            "commandtemplates": [ "Play my latest episodes" ]
+        }
     ]
   },
   {

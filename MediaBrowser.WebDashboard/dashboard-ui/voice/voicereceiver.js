@@ -6,17 +6,15 @@
     /// <returns> . </returns>
     function listenForCommand( lang ) {
         return new Promise(function(resolve, reject) {
-            destroyCurrentRecognition();
-            var recognition = new (window.SpeechRecognition ||
-                window.webkitSpeechRecognition ||
-                window.mozSpeechRecognition ||
-                window.oSpeechRecognition ||
-                window.msSpeechRecognition)();
-            recognition.lang = lang;
-            //recognition.continuous = true;
-            //recognition.interimResults = true;
-
-            recognition.onresult = function (event) {
+            if (currentRecognition == null) {
+                var recognition = new (window.SpeechRecognition ||
+                    window.webkitSpeechRecognition ||
+                    window.mozSpeechRecognition ||
+                    window.oSpeechRecognition ||
+                    window.msSpeechRecognition)();
+                recognition.lang = lang;
+            }
+            recognition.onresult = function(event) {
                 console.log(event);
                 if (event.results.length > 0) {
                     var resultInput = event.results[0][0].transcript || '';
@@ -31,28 +29,22 @@
             recognition.onnomatch = function() {
                 reject({ error: "no-match" });
             };
-
-            recognition.start();
             currentRecognition = recognition;
+            
+
+            currentRecognition.start();
+            
         });
     }
 
-    /// <summary> Destroys the current recognition. </summary>
-    /// <returns> . </returns>
-    function destroyCurrentRecognition() {
-
-        var recognition = currentRecognition;
-        if (recognition) {
-            recognition.abort();
-            currentRecognition = null;
-        }
-    }
-
+  
     /// <summary> Cancel listener. </summary>
     /// <returns> . </returns>
     function cancelListener() {
 
-        destroyCurrentRecognition();
+        if (currentRecognition) {
+            currentRecognition.abort();
+        }
         
     }
 

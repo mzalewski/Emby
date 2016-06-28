@@ -51,7 +51,7 @@ define([], function () {
 
     return function (result) {
         result.success = false;
-
+        console.log("RESULT FROM PLAY IS", result);
         var query = {
 
             Limit: result.item.limit || 100,
@@ -72,7 +72,7 @@ define([], function () {
             });
             result.success = true;
             return;
-        }
+        } 
 
         if (result.item.shuffle) {
             result.item.sortBy = result.sortBy ? 'Random,' + result.item.sortBy : 'Random';

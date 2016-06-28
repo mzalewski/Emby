@@ -206,44 +206,44 @@
       }
     ]
   },
-  {
-    "groupid": "tvseries",
-    "name": "TV series based commands",
-    "defaultValues": {
-      "itemType": "Series",
-      "filters": [ ],
-      "sortBy": "",
-      "sortOrder": "Ascending"
-    },
-    "items": [
-      {
-        "actionid": "show",
-        "sourceid": "tvseries",
-        "command": "(?<action>show|display|go to|view)\\s?(?<determiner1>my|me)?\\s?(?<source>(tv series))\\s?(?<SerieName>.*)?",
-        "commandtemplates": [
-          "Show tv series",
-          "Show my tv series"
+    {
+        "groupid": "tvseries",
+        "name": "TV series based commands",
+        "defaultValues": {
+            "itemType": "Series",
+            "filters": [ ],
+            "sortBy": "",
+            "sortOrder": "Ascending"
+        },
+        "items": [
+            {
+                "actionid": "show",
+                "sourceid": "tvseries",
+                "command": "(?<action>show|display|go to|view)\\s?(?<determiner1>my|me)?\\s?(?<source>(tv series))\\s?(?<SerieName>.*)?",
+                "commandtemplates": [
+                    "Show tv series",
+                    "Show my tv series"
+                ]
+            },
+            {
+                "actionid": "play",
+                "sourceid": "nextup",
+                "command": "(?<action>play|Listen to)\\s?(?<source> next up)\\s?(?<deviceaction>on device|to device)\\s?(?<Devicename>.*)",
+                "altcommand": "(?<action>play|Listen to)\\s?(?<source> next up)",
+                "commandtemplates": [ "Play next up" ]
+            },
+            {
+                "actionid": "play",
+                "sourceid": "latestepisodes",
+                "command": "(?<action>play)\\s?(?<determiner1>my|me)?\\s?(?<source>latest episodes)\\s?(?<deviceaction>on device|to device)\\s?(?<Devicename>.*)",
+                "altcommand": "(?<action>play)\\s?(?<determiner1>my|me)?\\s?(?<source>latest episodes)",
+                "filters": [ "unplayed" ],
+                "sortBy": "datecreated",
+                "sortOrder": "Descending",
+                "commandtemplates": [ "Play my latest episodes" ]
+            }
         ]
-      },
-      {
-        "actionid": "play",
-        "sourceid": "nextup",
-        "command": "(?<action>play|Listen to)\\s?(?<source> next up)\\s?(?<deviceaction>on device|to device)\\s?(?<Devicename>.*)",
-        "altcommand": "(?<action>play|Listen to)\\s?(?<source> next up)",
-        "commandtemplates": [ "Play next up" ]
-      },
-      {
-        "actionid": "play",
-        "sourceid": "latestepisodes",
-        "command": "(?<action>play)\\s?(?<determiner1>my|me)?\\s?(?<source>latest episodes)\\s?(?<deviceaction>on device|to device)\\s?(?<Devicename>.*)",
-        "altcommand": "(?<action>play)\\s?(?<determiner1>my|me)?\\s?(?<source>latest episodes)",
-        "filters": [ "unplayed" ],
-        "sortBy": "datecreated",
-        "sortOrder": "Descending",
-        "commandtemplates": [ "Play my latest episodes" ]
-      }
-    ]
-  },
+    },
   {
     "groupid": "livetv",
     "name": "Live TV based commands",
