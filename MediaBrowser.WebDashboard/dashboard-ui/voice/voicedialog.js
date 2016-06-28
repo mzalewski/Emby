@@ -2,7 +2,7 @@ define(['dialogHelper', 'jQuery', 'voice/voicereceiver', 'paper-button'], functi
 
     var currentRecognition;
     var lang = 'en-US';
-    var commandGroups = null;
+    var commandgroups = null;
 
     /// <summary> Shuffle array. </summary>
     /// <param name="array"> The array. </param>
@@ -29,7 +29,7 @@ define(['dialogHelper', 'jQuery', 'voice/voicereceiver', 'paper-button'], functi
     /// <summary> Gets sample commands. </summary>
     /// <returns> The sample commands. </returns>
     function getSampleCommands(groupid) {
-
+        
         return voicereceiver.getCommandGroups().then(function (commandGroups) {
             groupid = typeof (groupid) !== 'undefined' ? groupid : '';
 
@@ -58,18 +58,20 @@ define(['dialogHelper', 'jQuery', 'voice/voicereceiver', 'paper-button'], functi
     /// <param name="groupid"> The groupid. </param>
     /// <returns> The command group. </returns>
     function getCommandGroup(groupid) {
-        commandgroups = commandgroups || voicereceiver.getCommandGroups();
-        if (commandgroups) {
-            var idx = -1;
-            idx = commandgroups.map(function (e) { return e.groupid; }).indexOf(groupid);
+        return voicereceiver.getCommandGroups()
+            .then(function(commandgroups) {
+                if (commandgroups) {
+                    var idx = -1;
+                    
+                    idx = commandgroups.map(function(e) { return e.groupid; }).indexOf(groupid);
 
-            if (idx > -1)
-                return commandgroups[idx];
-            else
-                return null;
-        }
-        else
-            return null;
+                    if (idx > -1)
+                        return commandgroups[idx];
+                    else
+                        return null;
+                } else
+                    return null;
+            });
     }
 
     /// <summary> Renders the sample commands. </summary>
@@ -93,7 +95,10 @@ define(['dialogHelper', 'jQuery', 'voice/voicereceiver', 'paper-button'], functi
     /// <summary> Shows the voice help. </summary>
     /// <returns> . </returns>
     function showVoiceHelp(groupid, title) {
-
+        console.log("Showing Voice Help", groupid, title);
+        var isNewDialog = false;
+        if (!currentDialog) {
+            isNewDialog = true;
         var dlg = dialogHelper.createDialog({
             size: 'medium',
             removeOnClose: true
@@ -104,17 +109,13 @@ define(['dialogHelper', 'jQuery', 'voice/voicereceiver', 'paper-button'], functi
 
         var html = '';
         html += '<h2 class="dialogHeader">';
-        html += '<paper-fab icon="arrow-back" mini class="btnCancelVoiceInput"></paper-fab>';
-        if (groupid) {
-            var grp = getCommandGroup(groupid);
-            if (grp)
-                html += '  ' + grp.name;
-        }
+        html +=
+            '<paper-fab icon="arrow-back" mini class="btnCancelVoiceInput"></paper-fab><span id="voiceDialogGroupName"></span>';
+
         html += '</h2>';
 
         html += '<div>';
 
-        var getCommandsPromise = getSampleCommands(groupid);
 
         html += '<div class="voiceHelpContent">';
 
@@ -130,16 +131,22 @@ define(['dialogHelper', 'jQuery', 'voice/voicereceiver', 'paper-button'], functi
 
         html += '<div class="unrecognizedCommand" style="display:none;">';
         html += '<h1>' + Globalize.translate('HeaderYouSaid') + '</h1>';
-        html += '<p class="exampleCommand voiceInputContainer"><i class="fa fa-quote-left"></i><span class="voiceInputText exampleCommandText"></span><i class="fa fa-quote-right"></i></p>';
+        html +=
+            '<p class="exampleCommand voiceInputContainer"><i class="fa fa-quote-left"></i><span class="voiceInputText exampleCommandText"></span><i class="fa fa-quote-right"></i></p>';
         html += '<p>' + Globalize.translate('MessageWeDidntRecognizeCommand') + '</p>';
 
         html += '<br/>';
-        html += '<paper-button raised class="submit block btnRetry"><iron-icon icon="mic"></iron-icon><span>' + Globalize.translate('ButtonTryAgain') + '</span></paper-button>';
-        html += '<p class="blockedMessage" style="display:none;">' + Globalize.translate('MessageIfYouBlockedVoice') + '<br/><br/></p>';
+        html += '<paper-button raised class="submit block btnRetry"><iron-icon icon="mic"></iron-icon><span>' +
+            Globalize.translate('ButtonTryAgain') +
+            '</span></paper-button>';
+        html += '<p class="blockedMessage" style="display:none;">' +
+            Globalize.translate('MessageIfYouBlockedVoice') +
+            '<br/><br/></p>';
 
         html += '</div>';
 
-        html += '<paper-button raised class="block btnCancelVoiceInput" style="background-color:#444;"><iron-icon icon="close"></iron-icon><span>' + Globalize.translate('ButtonCancel') + '</span></paper-button>';
+        html +=
+            '<paper-button raised class="block btnCancelVoiceInput" style="background-color:#444;"><iron-icon icon="close"></iron-icon><span>' + Globalize.translate('ButtonCancel') + '</span></paper-button>';
 
         // voiceHelpContent
         html += '</div>';
@@ -148,7 +155,7 @@ define(['dialogHelper', 'jQuery', 'voice/voicereceiver', 'paper-button'], functi
 
         dlg.innerHTML = html;
         document.body.appendChild(dlg);
-
+    
         dialogHelper.open(dlg);
         currentDialog = dlg;
 
@@ -166,10 +173,29 @@ define(['dialogHelper', 'jQuery', 'voice/voicereceiver', 'paper-button'], functi
             $('.defaultVoiceHelp').show();
             listen();
         });
+        }
 
-        getCommandsPromise.then(function (commands) {
-            renderSampleCommands(dlg.querySelector('.voiceHelpContent'), commands);
-        });
+        if (groupid) {
+            getCommandGroup(groupid)
+                .then(
+                    function(grp) {
+                        $('#voiceDialogGroupName').text('  ' + grp.name);
+                    });
+
+
+            getSampleCommands(groupid)
+                .then(function(commands) {
+                    renderSampleCommands(currentDialog.querySelector('.voiceHelpContent'), commands);
+                    listen();
+                })
+                .catch(function(e) { console.log("Error", e); });
+        } else if (isNewDialog) {
+            getSampleCommands()
+                .then(function(commands) {
+                    renderSampleCommands(currentDialog.querySelector('.voiceHelpContent'), commands);
+                });
+
+        }
     }
 
     /// <summary> Hides the voice help. </summary>
@@ -237,8 +263,9 @@ define(['dialogHelper', 'jQuery', 'voice/voicereceiver', 'paper-button'], functi
         voicereceiver.listenForCommand(lang).then(function (data) {
             cancelDialog();
         }, function (result) {
+            console.log("Result received by voice dialog", result);
             if (result.error == 'group') {
-                showVoiceHelp(result.item.groupid, result.name);
+                showVoiceHelp(result.item.groupid, result.groupName);
                 return;
             }
             if (result.text !== undefined)
