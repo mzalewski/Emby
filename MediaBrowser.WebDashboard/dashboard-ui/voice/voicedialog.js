@@ -1,4 +1,4 @@
-define(['dialogHelper', 'jQuery', 'voice/voicereceiver', 'paper-button'], function (dialogHelper, $, voicereceiver) {
+define(['dialogHelper', 'jQuery', 'voice/voicereceiver', 'voice/voiceprocessor','paper-button'], function (dialogHelper, $, voicereceiver, voiceprocessor) {
 
     var currentRecognition;
     var lang = 'en-US';
@@ -30,7 +30,7 @@ define(['dialogHelper', 'jQuery', 'voice/voicereceiver', 'paper-button'], functi
     /// <returns> The sample commands. </returns>
     function getSampleCommands(groupid) {
         
-        return voicereceiver.getCommandGroups().then(function (commandGroups) {
+        return voiceprocessor.getCommandGroups().then(function (commandGroups) {
             groupid = typeof (groupid) !== 'undefined' ? groupid : '';
 
             var commands = [];
@@ -197,6 +197,9 @@ define(['dialogHelper', 'jQuery', 'voice/voicereceiver', 'paper-button'], functi
 
         }
     }
+    function processInput(input) {
+        return voiceprocessor.processTranscript(input);
+    }
 
     /// <summary> Hides the voice help. </summary>
     /// <returns> . </returns>
@@ -260,7 +263,7 @@ define(['dialogHelper', 'jQuery', 'voice/voicereceiver', 'paper-button'], functi
         listen();
     }
     function listen() {
-        voicereceiver.listenForCommand(lang).then(function (data) {
+        voicereceiver.listenForCommand(lang || "en-US").then(processInput).then(function (data) {
             cancelDialog();
         }, function (result) {
             console.log("Result received by voice dialog", result);
