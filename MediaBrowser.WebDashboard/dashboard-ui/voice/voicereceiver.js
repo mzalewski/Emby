@@ -5,15 +5,16 @@
     /// <summary> Starts listening for voice commands </summary>
     /// <returns> . </returns>
     function listenForCommand( lang ) {
-        return new Promise(function(resolve, reject) {
-            if (currentRecognition == null) {
-                var recognition = new (window.SpeechRecognition ||
-                    window.webkitSpeechRecognition ||
-                    window.mozSpeechRecognition ||
-                    window.oSpeechRecognition ||
-                    window.msSpeechRecognition)();
-                recognition.lang = lang;
-            }
+        return new Promise(function (resolve, reject) {
+            cancelListener();
+            
+            var recognition = new (window.SpeechRecognition ||
+                window.webkitSpeechRecognition ||
+                window.mozSpeechRecognition ||
+                window.oSpeechRecognition ||
+                window.msSpeechRecognition)();
+            recognition.lang = lang;
+        
             recognition.onresult = function(event) {
                 console.log(event);
                 if (event.results.length > 0) {
@@ -44,6 +45,7 @@
 
         if (currentRecognition) {
             currentRecognition.abort();
+            currentRecognition = null;
         }
         
     }
